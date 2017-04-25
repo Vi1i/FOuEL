@@ -1,5 +1,6 @@
 import random
 import struct
+import operator
 from bitstring import BitArray
 
 def rosenbrockBanana(x, y):
@@ -31,13 +32,18 @@ def initPop(pops, r):
 	return population
 
 def selector(population, count):
-	result = random.sample(population, count)
+	temp = random.sample(population, count)
+	temp_vals = []
+	for key in temp:
+		temp_vals.append(eval(0, population[key]))
 
-	return result
+	index, value = min(enumerate(temp_vals), key=operator.itemgetter(1))
 
-def eval(equation, x, y):
-	_x = to_float(x)
-	_y = to_float(_y)
+	return temp[index]
+
+def eval(equation, vals):
+	_x = to_float(vals[0])
+	_y = to_float(vals[1])
 	if(equation == 0):
 		return rosenbrockBanana(_x, _y)
 	elif(equation == 1):
@@ -45,11 +51,81 @@ def eval(equation, x, y):
 	else:
 		print("ERROR")
 
+def crossover(indv1, indv2):
+	roll = random.randint(0,128)
+	x = ""
+	y = ""
+	for pos in range(0,128):
+		if(pos < roll):
+			parent = indv1
+		else:
+			parent = indv2
+
+		if pos >= 64:
+			y += parent[1][pos - 64]
+		else:
+			x += parent[0][pos]
+
+
+	child = (x,y)
+	return child
+
+def mutation(indv, p):
+	x = ""
+	y = ""
+	for pos in range(0,128):
+		roll = random.randint(0,128)
+		if roll < p:
+			if pos >= 64:
+				tmp = pos - 64
+				if tmp < 4 and tmp > 0: 
+					y += indv[1][pos - 64]
+				else:
+					y += "0" if indv[1][pos - 64] == "1" else "1"
+			else:
+				if pos < 4 and pos > 0: 
+					x += indv[0][pos]
+				else:
+					x += "0" if indv[0][pos] == "1" else "1"
+		else:
+			if pos >= 64:
+				y += indv[1][pos - 64]
+			else:
+				x += indv[0][pos]
+
+
+	mutant = (x, y)
+	return mutant
+
+def fitness(population):
+	temp_population = []
+	for key in population:
+		temp_population.append(eval(0, population[key]))
+	index, value = min(enumerate(temp_population), key=operator.itemgetter(1))
+	return value
+
 # Set the seed for the random generator
-random.seed(0)
+random.seed(1)
+crossover_p = 0.6
+mutation_p = 0.1
 
-#create the population
-population = initPop(100, (-2, 2))
+# Create the population
+population = initPop(1000, (-2, 2))
 
-selection = selector(population, 5)
-print(selection)
+print("Generation,Fitness")
+for gen in range(0, 1000):
+	fit = fitness(population)
+	print(str(gen) + "," + str(fit))
+	new_pop = {}
+	for i in range(0, len(population)):
+		# Fnd the selection to variate on
+		indv1 = selector(population, 5)
+		roll = random.uniform(0, 1)
+		if roll >= crossover_p:
+			indv2 = selector(population, 5)
+			new_pop[i] = crossover(population[indv1], population[indv2])
+		else:
+			new_pop[i] = population[indv1]
+
+		new_pop[i] = mutation(new_pop[i], mutation_p)
+	population = new_pop;
