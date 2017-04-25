@@ -36,8 +36,24 @@ def initPop(pops, r):
 
 	return population
 
+def selector(population, count):
+	result = []
+	prev_ris = []
+	while len(prev_ris) < count:
+		ri = random.randint(0,len(population) - 1)
+		if ri in prev_ris:
+			continue
+		prev_ris.append(ri)
+		result.append((ri, population[ri]))
+
+	return result
+
 # Set the seed for the random generator
 random.seed(0)
 
 #create the population
 population = initPop(100, (-2, 2))
+
+selection = selector(population, 5)
+
+print(selection)
